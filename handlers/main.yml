@@ -1,0 +1,7 @@
+---
+# handlers file for flink
+- name: "restart flink-jobmanager service"
+  service: name="flink-jobmanager" state="restarted"
+
+- name: "restart flink-taskmanager service"
+  service: name="flink-taskmanager" state="restarted"

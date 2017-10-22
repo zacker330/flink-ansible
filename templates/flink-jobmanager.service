@@ -1,0 +1,15 @@
+[Unit]
+Description=flink jobmanager
+After=network.target
+
+[Service]
+Type=forking
+User={{username}}
+Group={{usergroup}}
+Environment=JAVA_HOME={{JAVA_HOME}}
+#PIDFile=/run/flink-jobmanager.pid
+ExecStart={{flink_home}}/bin/jobmanager.sh start cluster
+ExecStop={{flink_home}}/bin/jobmanager.sh stop
+
+[Install]
+WantedBy=multi-user.target

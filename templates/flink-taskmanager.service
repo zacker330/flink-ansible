@@ -1,0 +1,15 @@
+[Unit]
+Description=flink taskmanager
+After=network.target
+
+[Service]
+Type=forking
+User={{username}}
+Group={{usergroup}}
+Environment=JAVA_HOME={{JAVA_HOME}}
+#PIDFile=/run/flink-taskmanager.pid
+ExecStart={{flink_home}}/bin/taskmanager.sh start
+ExecStop={{flink_home}}/bin/taskmanager.sh stop
+
+[Install]
+WantedBy=multi-user.target

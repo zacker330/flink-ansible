@@ -1,0 +1,104 @@
+---
+
+- name: mkdir /app folder
+  file:
+    state: directory
+    owner: "{{username}}"
+    group: "{{usergroup}}"
+    path: "/app"
+    mode: "ug=rwx,o=rx"
+  tags:
+    - flink
+- stat:
+    path: "{{flink_install_dir}}/{{flink_tar_file_name}}"
+  register: __flink_tar_file_name
+  tags:
+    - flink
+- name: "download flink from {{flink_download_url}}"
+  get_url:
+    url: "{{flink_download_url}}"
+    dest: "{{flink_install_dir}}"
+    owner: "{{username}}"
+    group: "{{usergroup}}"
+    mode: "ug=rwx,o=rx"
+  when:  __flink_tar_file_name.stat.exists == False
+  tags:
+    - flink
+
+- name: unarchive
+  unarchive:
+    src: "{{flink_install_dir}}/{{flink_tar_file_name}}"
+    dest: "{{flink_install_dir}}"
+    owner: "{{username}}"
+    remote_src: true
+    group: "{{usergroup}}"
+    mode: "ug=rwx,o=rx"
+  tags:
+    - flink
+
+- stat:
+    path: "{{flink_home}}"
+  register: __flink_home
+  tags:
+    - flink
+- name: "mv {{flink_install_dir}}/{{flink_version_folder_name}} {{flink_home}}"
+  command: "mv {{flink_install_dir}}/{{flink_version_folder_name}} {{flink_home}}"
+  when: __flink_home.stat.exists == False
+  tags:
+    - flink
+
+
+- name: chowner
+  file:
+    path: "{{flink_home}}"
+    recurse: yes
+    state: directory
+    owner: "{{username}}"
+    group: "{{usergroup}}"
+    mode: "ug=rwx,o=rx"
+  tags:
+    - flink
+
+
+- name: template config
+  template:
+    src: "flink-conf.yaml"
+    dest: "{{flink_home}}/conf/flink-conf.yaml"
+    owner: "{{username}}"
+    group: "{{usergroup}}"
+    mode: "ug=rwx,o=rx"
+  notify: "restart flink-{{flink_role}} service"
+  tags:
+    - flink
+
+
+- name: template service
+  template:
+    src: "flink-{{flink_role}}.service"
+    dest: "/etc/systemd/system/flink-{{flink_role}}.service"
+    owner: "{{username}}"
+    group: "{{usergroup}}"
+    mode: "ug=rwx,o=rx"
+  notify: "restart flink-{{flink_role}} service"
+  tags:
+    - flink
+
+
+- name: reload systemctl daemon
+  command: systemctl daemon-reload
+  tags:
+    - flink
+
+
+
+- name: "start flink-{{flink_role}}"
+  service:
+    name: "flink-{{flink_role}}"
+    state: "started"
+    enabled: yes
+  tags:
+    - flink
+
+- meta: flush_handlers
+  tags:
+    - flink
